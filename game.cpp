@@ -4,16 +4,18 @@
 using namespace std;
 class Pawns{
     public:
+        static const int steps=2;
         string name;
-        char img;
+        char img,line[steps];
         int cur_pos;
-
         Pawns(){
             name="CPU";
             img='C';
             cur_pos=0;
+            for(int i=1;i<steps;i++)
+                line[i]='_';
+            line[0]='C';
         }
-
         Pawns(string name){
             this->name=name;
             if(name[0]>='a'&&name[0]<='z')
@@ -22,60 +24,28 @@ class Pawns{
             cur_pos=0;
             if(img=='C')
                 img='P';
+            for(int i=1;i<steps;i++)
+                line[i]='_';
+            line[0]=img;
         }
+        void update(int guess){
+            line[cur_pos]='_';
+            cur_pos+=guess;
+            if(cur_pos>=steps)
+                cur_pos=steps-1;
+            line[cur_pos]=img;
+        }      
 };
-
-class Board{
-    public:
-        static const int steps=10;
-        char line1[steps],line2[steps];
-
-        Board(Pawns player,Pawns cpu){
-            int i=0;
-            for(i=0;i<steps;i++){
-                    line1[i]='_';
-                    line2[i]='_';
-                }
-            line1[player.cur_pos]=player.img;
-            line2[cpu.cur_pos]=cpu.img;
-        }
-
-        void update(Pawns &p,string turn,int guess){
-            if(turn=="player"){
-                line1[p.cur_pos]='_';
-                p.cur_pos+=guess;
-                if(p.cur_pos>=steps)
-                    p.cur_pos=steps-1;
-                line1[p.cur_pos]=p.img;
-                return;
-            }
-            else if(turn=="computer"){
-                line2[p.cur_pos]='_';
-                p.cur_pos+=guess;
-                if(p.cur_pos>=steps)
-                    p.cur_pos=steps-1;
-                line2[p.cur_pos]=p.img;
-                return;
-            }
-        }
-
-        void show_board(Pawns player,Pawns cpu){
-                cout<<"\n\n\t\t   "<<player.name<<"( "<<player.cur_pos+1<<" )\t\t"<<"Computer( "<<cpu.cur_pos+1<<" )\n\n";
-                int i=0;
-                cout<<"\n\t\t";
-
-                for(i=0;i<steps;i++){
-                    cout<<line1[i]; 
-                }
-                cout<<"\n\n\t\t";
-                for(i=0;i<steps;i++){
-                    cout<<line2[i];     
-                }
-                cout<<"\n\n\tStart(1)\t\t\t\t\tFinish(10)";
-                cout<<"\n\n\n\n\n";
-
-        }
-};
+void show_board(Pawns player,Pawns cpu){
+    cout<<"\n\n\t\t"<<player.name<<"( "<<player.cur_pos+1<<" )\t\t"<<"Computer( "<<cpu.cur_pos+1<<" )\n\n\n\t\t\t";
+    int i=0;
+    for(i=0;i<Pawns::steps;i++)
+        cout<<player.line[i]; 
+    cout<<"\n\n\t\t\t";
+    for(i=0;i<Pawns::steps;i++)
+        cout<<cpu.line[i];     
+    cout<<"\n\n\t  Start(1)\t\t\t\tFinish("<<Pawns::steps<<")\n\n\n\n\n";
+}
 int getRandom(){//Generate the random number
     int value;
     srand(time(0));
@@ -83,87 +53,75 @@ int getRandom(){//Generate the random number
     return value;
 }
 int check(Pawns &p){//Checks if anyone has won the game.
-    if(p.cur_pos>=Board::steps-1){
-        p.cur_pos=Board::steps-1;
+    if(p.cur_pos>=Pawns::steps-1){
+        p.cur_pos=Pawns::steps-1;
         system("CLS");
-        cout<<"\n\n\t\t\t\t"<<p.name<<"  Won!!!\n\n\n\t\t\tSend Alapan 100 dollars!!!\n\t\t\tor phone Hacked  "<<char(1)<<"\n";
+        cout<<"\n\n\t\t\t "<<p.name<<"  Won!!!\n";
         return 1;
     }
     return 0;
 }
-
-void play_game(Pawns player,Pawns cpu,Board b){
+void play_game(Pawns player,Pawns cpu){
     system("CLS");
-    int random=0,guess=0;
-    b.show_board(player,cpu);
-    while(true){
-        random=getRandom();
-        cout<<"\nGuess a number (1-5): ";
-        cin>>guess;
-        while(guess<1||guess>5){
-            cout<<"\n!!Enetr a number between (1-5)!!: ";
-            cin>>guess;
+    int player_input=0,computer_input=0,flag=0;
+    show_board(player,cpu);
+    while(flag==0){
+        computer_input=getRandom();
+        cout<<"\nGuess a number (1-5)(Enter -1 to quit): ";
+        cin>>player_input;
+        while((player_input<1||player_input>5)&&player_input!=-1){
+            cout<<"\n!!Enter a number between (1-5)!!(Enter -1 to quit): ";
+            cin>>player_input;
         }
+        if(player_input==-1)
+            exit(0);
         system("CLS");
         cout<<"\n\n";
-        if(random==guess){
-            cout<<"Correct Guess: ("<<random<<")."<<player.name<<" moves "<<guess<<" steps.\n";
-            b.update(player,"player",random);
+        if(player_input==computer_input){
+            cout<<"Correct Guess: ("<<player_input<<")."<<player.name<<" moves "<<player_input<<" steps.\n";
+            player.update(player_input);
         }
-        else{
-            cout<<"Wrong Guess ("<<guess<<"). Number was: ("<<random<<")\n";
-        }
+        else
+            cout<<"Wrong Guess ("<<player_input<<"). Number was: ("<<computer_input<<")\n";
         if(check(player)){
-            b.show_board(player,cpu);
+            show_board(player,cpu);
             break;
         }
-        b.show_board(player,cpu);
+        show_board(player,cpu);
 
-        guess=getRandom();
-        cout<<"\nGive a number for Computer to guess(1-5): ";
-        cin>>random;
-        while(random<1||random>5){
-            cout<<"\n!!Enetr a number between (1-5)!!: ";
-            cin>>random;
+        computer_input=getRandom();
+        cout<<"\nGive a number for Computer to guess(1-5)(Enter -1 to quit): ";
+        cin>>player_input;
+        while((player_input<1||player_input>5)&&player_input!=-1){
+            cout<<"\n!!Enter a number between (1-5)!!(Enter -1 to quit): ";
+            cin>>player_input;
         }
+        if(player_input==-1)
+           exit(0);
         system("CLS");
         cout<<"\n\n";
-        if(random==guess){
-            cout<<"Computer Guessed Correct("<<random<<"). Computer moves "<<guess<<" steps.\n";
-            b.update(cpu,"computer",random);
+        if(player_input==computer_input){
+            cout<<"Computer Guessed Correct("<<player_input<<"). Computer moves "<<player_input<<" steps.\n";
+            cpu.update(player_input);
         }
-        else{
-            cout<<"Computer Guessed Wrong ("<<guess<<"). Number was: ("<<random<<")\n";
-        }
-        if(check(cpu)){
-            b.show_board(player,cpu);
-            break;
-        }
-        b.show_board(player,cpu);        
+        else
+            cout<<"Computer Guessed Wrong ("<<computer_input<<"). Number was: ("<<player_input<<")\n";
+        flag=check(cpu);
+        show_board(player,cpu);        
     }
-
 }
-
-
 int main(){
     system("CLS");
     string name="Player";
     int choice=0;
-    
     cout<<"Enter your name: ";
     cin>>name;
-
     Pawns player=Pawns(name);
     Pawns cpu=Pawns();
-    Board b=Board(player,cpu);
-
-    play_game(player,cpu,b);
-    
-    cout<<"Enter 1 to play again or 0 to quit: ";
+    play_game(player,cpu);
+    cout<<"Enter 1 to play again or anything else to quit: ";
     cin>>choice;
     if(choice==1)
-        play_game(player,cpu,b);
-
-
+        play_game(player,cpu);
     return 0;
 }
